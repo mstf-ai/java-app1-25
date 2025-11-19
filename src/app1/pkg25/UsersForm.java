@@ -4,6 +4,14 @@
  */
 package app1.pkg25;
 
+import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author Mosta
@@ -17,7 +25,28 @@ public class UsersForm extends javax.swing.JFrame {
      */
     public UsersForm() {
         initComponents();
-    }
+        
+   // تعديل الجدول داخل constructor مسموح
+    table_showQuery.setModel(new javax.swing.table.DefaultTableModel(
+        new Object [][] {},
+        new String [] { "id", "name", "email" }
+    ) {
+        boolean[] canEdit = new boolean [] { false, false, false };
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit[columnIndex];
+        }
+    });
+}
+
+// helper methods هنا خارج constructor
+private void loadUsers() { }
+private void addUser() { }
+private void clearInputs() {
+    txt_uname.setText("");  // مسح حقل الاسم
+    txt_email.setText("");  // مسح حقل الإيميل
+    table_showQuery.clearSelection();  // إزالة أي اختيار من الجدول
+}
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -31,8 +60,8 @@ public class UsersForm extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        btn_query = new javax.swing.JButton();
-        btn_save = new javax.swing.JButton();
+        btn_loadUsers = new javax.swing.JButton();
+        btn_addUser = new javax.swing.JButton();
         txt_uname = new javax.swing.JTextField();
         txt_email = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -50,27 +79,50 @@ public class UsersForm extends javax.swing.JFrame {
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel3.setText("E-mail");
 
-        btn_query.setText("Load Users ...🔍");
+        btn_loadUsers.setText("Load Users ...🔍");
+        btn_loadUsers.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btn_loadUsersMouseClicked(evt);
+            }
+        });
 
-        btn_save.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btn_save.setText("Add User");
-        btn_save.addActionListener(new java.awt.event.ActionListener() {
+        btn_addUser.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btn_addUser.setText("Add User");
+        btn_addUser.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btn_addUserMouseClicked(evt);
+            }
+        });
+        btn_addUser.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_saveActionPerformed(evt);
+                btn_addUserActionPerformed(evt);
             }
         });
 
         table_showQuery.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "id", "name", "email"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, true, true
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        table_showQuery.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                table_showQueryMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(table_showQuery);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -94,10 +146,10 @@ public class UsersForm extends javax.swing.JFrame {
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(jLabel3)
-                                            .addComponent(btn_save, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                            .addComponent(btn_addUser, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
                                         .addGap(18, 18, 18)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(btn_query, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+                                            .addComponent(btn_loadUsers, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
                                             .addComponent(txt_email))))))
                         .addGap(0, 31, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
@@ -120,8 +172,8 @@ public class UsersForm extends javax.swing.JFrame {
                     .addComponent(txt_email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btn_save)
-                    .addComponent(btn_query))
+                    .addComponent(btn_addUser)
+                    .addComponent(btn_loadUsers))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -130,9 +182,66 @@ public class UsersForm extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btn_saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_saveActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_btn_saveActionPerformed
+    private void btn_addUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_addUserActionPerformed
+      
+    }//GEN-LAST:event_btn_addUserActionPerformed
+
+    private void btn_addUserMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_addUserMouseClicked
+  
+    String name = txt_uname.getText().trim();
+    String email = txt_email.getText().trim();
+
+    if (name.isEmpty() || email.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "الاسم والإيميل مطلوبان");
+        return;
+    }
+
+    String sql = "INSERT INTO users (name, email) VALUES (?, ?)";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, name);
+        ps.setString(2, email);
+        int rows = ps.executeUpdate();
+        JOptionPane.showMessageDialog(this, "Rows inserted: " + rows);
+        loadUsers();      // لتحديث الجدول بعد الإضافة
+        clearInputs();    // مسح الحقول بعد الإضافة
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Insert error: " + e.getMessage());
+    }
+
+    }//GEN-LAST:event_btn_addUserMouseClicked
+
+    private void btn_loadUsersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_loadUsersMouseClicked
+
+    DefaultTableModel model = (DefaultTableModel) table_showQuery.getModel();
+    model.setRowCount(0); // مسح أي بيانات موجودة
+    try (Connection conn = DBConnection.getConnection();
+         Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery("SELECT * FROM users")) {
+
+        while (rs.next()) {
+            model.addRow(new Object[]{
+                rs.getInt("id"),
+                rs.getString("name"),
+                rs.getString("email")
+            });
+        }
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Load error: " + e.getMessage());
+    }
+
+    }//GEN-LAST:event_btn_loadUsersMouseClicked
+
+    private void table_showQueryMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_table_showQueryMouseClicked
+ int row = table_showQuery.getSelectedRow();
+    if (row != -1) {
+        txt_uname.setText(table_showQuery.getValueAt(row, 1).toString());
+        txt_email.setText(table_showQuery.getValueAt(row, 2).toString());
+    }
+    }//GEN-LAST:event_table_showQueryMouseClicked
 
     /**
      * @param args the command line arguments
@@ -160,8 +269,8 @@ public class UsersForm extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btn_query;
-    private javax.swing.JButton btn_save;
+    private javax.swing.JButton btn_addUser;
+    private javax.swing.JButton btn_loadUsers;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
